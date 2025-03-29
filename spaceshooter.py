@@ -1,6 +1,7 @@
 import pygame
 import random
 import sys
+import os  # For file operations
 
 # Initialize Pygame
 pygame.init()
@@ -31,6 +32,27 @@ bullet_img.fill(GREEN)
 # Initialize score
 score = 0
 font = pygame.font.SysFont(None, 36)  # Font for displaying the score
+
+# File to store the high score
+HIGH_SCORE_FILE = "high_score.txt"
+
+def load_high_score():
+    """Load the high score from a file."""
+    if os.path.exists(HIGH_SCORE_FILE):
+        with open(HIGH_SCORE_FILE, "r") as file:
+            try:
+                return int(file.read().strip())
+            except ValueError:
+                return 0  # Default to 0 if the file is corrupted
+    return 0  # Default to 0 if the file doesn't exist
+
+def save_high_score(score):
+    """Save the high score to a file."""
+    with open(HIGH_SCORE_FILE, "w") as file:
+        file.write(str(score))
+
+# Initialize high score
+high_score = load_high_score()
 
 def draw_score():
     score_text = font.render(f"Score: {score}", True, WHITE)
@@ -134,20 +156,27 @@ def show_welcome_screen():
                     return  # Exit the welcome screen and start the game
 
 def show_game_over_screen(final_score):
-    """Display the game over screen with the final score."""
+    """Display the game over screen with the final score and high score."""
+    global high_score
+    if final_score > high_score:
+        high_score = final_score  # Update high score if the current score is higher
+        save_high_score(high_score)  # Save the new high score to the file
+
     title_font = pygame.font.SysFont(None, 64)
     score_font = pygame.font.SysFont(None, 48)
     button_font = pygame.font.SysFont(None, 48)
 
     title_text = title_font.render("Game Over", True, WHITE)
     score_text = score_font.render(f"Your Score: {final_score}", True, WHITE)
+    high_score_text = score_font.render(f"High Score: {high_score}", True, WHITE)
     button_text = button_font.render("Play Again", True, BLACK)
     button_rect = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 + 50, 200, 60)
 
     while True:
         screen.fill(BLACK)
         screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 4))
-        screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 2 - 50))
+        screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 2 - 100))
+        screen.blit(high_score_text, (WIDTH // 2 - high_score_text.get_width() // 2, HEIGHT // 2 - 50))
         pygame.draw.rect(screen, GREEN, button_rect)
         screen.blit(button_text, (button_rect.x + button_rect.width // 2 - button_text.get_width() // 2,
                                   button_rect.y + button_rect.height // 2 - button_text.get_height() // 2))
