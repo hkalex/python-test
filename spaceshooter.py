@@ -105,47 +105,115 @@ for _ in range(8):
     enemies.add(enemy)
 
 # Initialize firing timer
-fire_delay = 100  # Delay in milliseconds (0.1 seconds)
+fire_delay = 200  # Delay in milliseconds (0.2 seconds)
 last_fire_time = pygame.time.get_ticks()
 
-# Game loop
-running = True
-while running:
-    clock.tick(60)
-    current_time = pygame.time.get_ticks()
+def show_welcome_screen():
+    """Display the welcome screen with a 'Start' button."""
+    button_font = pygame.font.SysFont(None, 48)
+    title_font = pygame.font.SysFont(None, 64)
 
-    # Event handling
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+    title_text = title_font.render("Hello Welcome to Alex's Space Shooter game.", True, WHITE)
+    button_text = button_font.render("Start", True, BLACK)
+    button_rect = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 - 30, 200, 60)
 
-    # Check if left mouse button is held down
-    if pygame.mouse.get_pressed()[0]:  # Left mouse button
-        if current_time - last_fire_time >= fire_delay:
-            player.shoot()
-            last_fire_time = current_time
+    while True:
+        screen.fill(BLACK)
+        screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 4))
+        pygame.draw.rect(screen, GREEN, button_rect)
+        screen.blit(button_text, (button_rect.x + button_rect.width // 2 - button_text.get_width() // 2,
+                                  button_rect.y + button_rect.height // 2 - button_text.get_height() // 2))
+        pygame.display.flip()
 
-    # Update
-    player.update()  # Update player position based on mouse
-    enemies.update()  # No arguments for enemies
-    bullets.update()  # No arguments for bullets
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1 and button_rect.collidepoint(event.pos):  # Left click on the button
+                    return  # Exit the welcome screen and start the game
 
-    # Check for collisions
-    hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
-    for hit in hits:
-        score += 10  # Increment score by 10
+def show_game_over_screen(final_score):
+    """Display the game over screen with the final score."""
+    title_font = pygame.font.SysFont(None, 64)
+    score_font = pygame.font.SysFont(None, 48)
+    button_font = pygame.font.SysFont(None, 48)
+
+    title_text = title_font.render("Game Over", True, WHITE)
+    score_text = score_font.render(f"Your Score: {final_score}", True, WHITE)
+    button_text = button_font.render("Play Again", True, BLACK)
+    button_rect = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 + 50, 200, 60)
+
+    while True:
+        screen.fill(BLACK)
+        screen.blit(title_text, (WIDTH // 2 - title_text.get_width() // 2, HEIGHT // 4))
+        screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, HEIGHT // 2 - 50))
+        pygame.draw.rect(screen, GREEN, button_rect)
+        screen.blit(button_text, (button_rect.x + button_rect.width // 2 - button_text.get_width() // 2,
+                                  button_rect.y + button_rect.height // 2 - button_text.get_height() // 2))
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1 and button_rect.collidepoint(event.pos):  # Left click on the button
+                    return  # Exit the game over screen and restart the game
+
+# Main execution
+while True:  # Allow restarting the game after "Game Over"
+    show_welcome_screen()  # Show the welcome screen before starting the game
+
+    # Reset game state
+    score = 0
+    all_sprites.empty()
+    enemies.empty()
+    bullets.empty()
+    player = Player()
+    all_sprites.add(player)
+    for _ in range(8):
         enemy = Enemy()
         all_sprites.add(enemy)
         enemies.add(enemy)
 
-    if pygame.sprite.spritecollideany(player, enemies):
-        running = False
+    # Game loop
+    running = True
+    while running:
+        clock.tick(60)
+        current_time = pygame.time.get_ticks()
 
-    # Draw
-    screen.fill(BLACK)
-    all_sprites.draw(screen)
-    draw_score()  # Draw the score on the screen
-    pygame.display.flip()
+        # Event handling
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-pygame.quit()
-sys.exit()
+        # Check if left mouse button is held down
+        if pygame.mouse.get_pressed()[0]:  # Left mouse button
+            if current_time - last_fire_time >= fire_delay:
+                player.shoot()
+                last_fire_time = current_time
+
+        # Update
+        player.update()  # Update player position based on mouse
+        enemies.update()  # No arguments for enemies
+        bullets.update()  # No arguments for bullets
+
+        # Check for collisions
+        hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
+        for hit in hits:
+            score += 10  # Increment score by 10
+            enemy = Enemy()
+            all_sprites.add(enemy)
+            enemies.add(enemy)
+
+        if pygame.sprite.spritecollideany(player, enemies):
+            running = False
+
+        # Draw
+        screen.fill(BLACK)
+        all_sprites.draw(screen)
+        draw_score()  # Draw the score on the screen
+        pygame.display.flip()
+
+    show_game_over_screen(score)  # Show the game over screen after the game ends
